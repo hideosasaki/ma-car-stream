@@ -21,8 +21,6 @@ ExecStart=/usr/bin/python3 /home/sasaki/ma-car-stream/icy_server.py
 ExecStopPost=/bin/rm -f /tmp/snapstream
 Restart=on-failure
 RestartSec=3
-StandardOutput=append:/tmp/icy_server.log
-StandardError=append:/tmp/icy_server.log
 
 [Install]
 WantedBy=multi-user.target

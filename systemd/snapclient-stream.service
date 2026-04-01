@@ -19,8 +19,6 @@ Type=simple
 ExecStart=/usr/bin/snapclient -h localhost --player file:filename=/tmp/snapstream --logsink stderr
 Restart=on-failure
 RestartSec=5
-StandardOutput=append:/tmp/snapclient.log
-StandardError=append:/tmp/snapclient.log
 
 [Install]
 WantedBy=multi-user.target
