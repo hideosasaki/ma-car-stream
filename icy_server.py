@@ -16,9 +16,10 @@ import urllib.request
 
 # Config
 FIFO_PATH = "/tmp/snapstream"
-SAMPLE_RATE = 48000
+INPUT_SAMPLE_RATE = 48000
+OUTPUT_SAMPLE_RATE = 44100
 CHANNELS = 2
-MP3_BITRATE = "320k"
+MP3_BITRATE = "192k"
 HTTP_PORT = 8000
 ICY_METAINT = 16000
 SNAPSERVER_URL = "http://localhost:1780/jsonrpc"
@@ -92,9 +93,10 @@ def run_ffmpeg():
                 [
                     "ffmpeg",
                     "-f", "s16le",
-                    "-ar", str(SAMPLE_RATE),
+                    "-ar", str(INPUT_SAMPLE_RATE),
                     "-ac", str(CHANNELS),
                     "-i", FIFO_PATH,
+                    "-ar", str(OUTPUT_SAMPLE_RATE),
                     "-c:a", "libmp3lame",
                     "-b:a", MP3_BITRATE,
                     "-f", "mp3",
