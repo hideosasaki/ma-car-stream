@@ -16,9 +16,10 @@ import urllib.request
 
 # Config
 FIFO_PATH = "/tmp/snapstream"
-SAMPLE_RATE = 48000
+INPUT_SAMPLE_RATE = 48000
+OUTPUT_SAMPLE_RATE = 44100
 CHANNELS = 2
-OPUS_BITRATE = "128k"
+MP3_BITRATE = "192k"
 HTTP_PORT = 8000
 ICY_METAINT = 16000
 SNAPSERVER_URL = "http://localhost:1780/jsonrpc"
@@ -92,12 +93,13 @@ def run_ffmpeg():
                 [
                     "ffmpeg",
                     "-f", "s16le",
-                    "-ar", str(SAMPLE_RATE),
+                    "-ar", str(INPUT_SAMPLE_RATE),
                     "-ac", str(CHANNELS),
                     "-i", FIFO_PATH,
-                    "-c:a", "libopus",
-                    "-b:a", OPUS_BITRATE,
-                    "-f", "ogg",
+                    "-ar", str(OUTPUT_SAMPLE_RATE),
+                    "-c:a", "libmp3lame",
+                    "-b:a", MP3_BITRATE,
+                    "-f", "mp3",
                     "-"
                 ],
                 stdout=subprocess.PIPE,
@@ -152,7 +154,7 @@ class ICYHandler(http.server.BaseHTTPRequestHandler):
         icy_requested = self.headers.get("Icy-MetaData") == "1"
 
         self.send_response(200)
-        self.send_header("Content-Type", "audio/ogg")
+        self.send_header("Content-Type", "audio/mpeg")
         self.send_header("Cache-Control", "no-cache, no-store")
         self.send_header("Pragma", "no-cache")
         self.send_header("icy-name", "Music Assistant")
