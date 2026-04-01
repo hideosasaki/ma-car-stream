@@ -145,7 +145,7 @@ def build_icy_metadata():
 
 class ICYHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path != "/car.mp3":
+        if self.path != "/":
             self.send_error(404)
             return
 
@@ -223,7 +223,7 @@ def main():
 
     server = http.server.ThreadingHTTPServer(("0.0.0.0", HTTP_PORT), ICYHandler)
     print(f"ICY server running on port {HTTP_PORT}", flush=True)
-    print(f"Stream URL: http://0.0.0.0:{HTTP_PORT}/car.mp3", flush=True)
+    print(f"Stream URL: http://0.0.0.0:{HTTP_PORT}/", flush=True)
 
     try:
         server.serve_forever()

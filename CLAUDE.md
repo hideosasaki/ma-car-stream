@@ -23,8 +23,8 @@ Raspberry Pi 4上で動作する。詳細はREADME.mdを参照。
 
 1. `./start_stream.sh` でパイプライン起動
 2. MAで曲を再生
-3. `curl -s -H "Icy-MetaData: 1" http://localhost:8000/car.mp3 | head -c 50000 | strings | grep StreamTitle` でメタデータ確認
-4. ブラウザまたはVLCで `http://localhost:8000/car.mp3` にアクセスして音声確認
+3. `curl -s -H "Icy-MetaData: 1" http://localhost:8000/ | head -c 50000 | strings | grep StreamTitle` でメタデータ確認
+4. ブラウザまたはVLCで `http://localhost:8000/` にアクセスして音声確認
 5. ログ: `/tmp/icy_server.log`, `/tmp/snapclient.log`
 
 ## 重要な注意点
