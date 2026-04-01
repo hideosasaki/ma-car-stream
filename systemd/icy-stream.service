@@ -1,0 +1,28 @@
+# ICY Streaming Server for Music Assistant → CarPlay
+#
+# Install:
+#   sudo cp systemd/icy-stream.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable icy-stream.service
+#
+# FIFO is created by ExecStartPre and cleaned up by ExecStopPost.
+# snapclient-stream.service depends on this unit (FIFO reader must start first).
+
+[Unit]
+Description=ICY Streaming Server (Music Assistant to CarPlay)
+After=network.target
+Wants=snapclient-stream.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/rm -f /tmp/snapstream
+ExecStartPre=/usr/bin/mkfifo /tmp/snapstream
+ExecStart=/usr/bin/python3 /home/sasaki/ma-car-stream/icy_server.py
+ExecStopPost=/bin/rm -f /tmp/snapstream
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/tmp/icy_server.log
+StandardError=append:/tmp/icy_server.log
+
+[Install]
+WantedBy=multi-user.target

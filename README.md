@@ -35,7 +35,10 @@ Music Assistant (Docker, Raspi4)
 ma-car-stream/
 ├── README.md
 ├── icy_server.py          # メインサーバー（ICY HTTP配信 + メタデータ取得）
-└── start_stream.sh        # パイプライン起動スクリプト
+├── start_stream.sh        # パイプライン起動スクリプト（手動起動用）
+└── systemd/
+    ├── icy-stream.service          # ICYサーバーのsystemdユニット
+    └── snapclient-stream.service   # snapclientのsystemdユニット
 ```
 
 ## 依存関係
@@ -74,7 +77,20 @@ curl -s http://localhost:1780/jsonrpc -d '{
 }'
 ```
 
-### 起動
+### 起動（systemd）
+
+```bash
+# ファイルを配置（初回のみ）
+sudo cp systemd/*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+
+# 有効化・起動
+sudo systemctl enable --now icy-stream.service
+```
+
+snapclient-stream.serviceはicy-stream.serviceに依存しているため、自動的に起動する。
+
+### 起動（手動）
 
 ```bash
 ./start_stream.sh

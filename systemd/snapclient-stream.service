@@ -1,0 +1,26 @@
+# Snapclient writing PCM to FIFO for ICY streaming
+#
+# Install:
+#   sudo cp systemd/snapclient-stream.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable snapclient-stream.service
+#
+# Requires icy-stream.service to be running first (FIFO reader).
+# Note: After first start, assign this snapclient to the Music Assistant
+# stream via Snapweb (http://localhost:1780) or JSON-RPC API.
+
+[Unit]
+Description=Snapclient for ICY Stream (FIFO output)
+After=icy-stream.service
+Requires=icy-stream.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/snapclient -h localhost --player file:filename=/tmp/snapstream --logsink stderr
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/tmp/snapclient.log
+StandardError=append:/tmp/snapclient.log
+
+[Install]
+WantedBy=multi-user.target
