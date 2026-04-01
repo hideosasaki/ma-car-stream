@@ -35,8 +35,7 @@ Music Assistant (Docker, Raspi4)
 ma-car-stream/
 ├── README.md
 ├── icy_server.py          # メインサーバー（ICY HTTP配信 + メタデータ取得）
-├── start_stream.sh        # パイプライン起動スクリプト
-└── systemd/               # TODO: systemdサービスファイル
+└── start_stream.sh        # パイプライン起動スクリプト
 ```
 
 ## 依存関係

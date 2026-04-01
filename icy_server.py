@@ -6,6 +6,7 @@ ICY Streaming Server
 - ThreadingHTTPServer
 """
 
+import collections
 import http.server
 import subprocess
 import threading
@@ -29,7 +30,7 @@ current_art_url = ""
 metadata_lock = threading.Lock()
 
 # MP3 buffer
-mp3_chunks = []
+mp3_chunks = collections.deque(maxlen=BUFFER_SIZE)
 mp3_write_idx = 0
 mp3_lock = threading.Lock()
 mp3_event = threading.Event()
@@ -82,7 +83,7 @@ def fetch_metadata():
 
 def run_ffmpeg():
     """Run ffmpeg continuously, buffer MP3 output."""
-    global mp3_chunks, mp3_write_idx
+    global mp3_write_idx
 
     while True:
         try:
@@ -90,7 +91,6 @@ def run_ffmpeg():
             ffmpeg = subprocess.Popen(
                 [
                     "ffmpeg",
-                    "-re",
                     "-f", "s16le",
                     "-ar", str(SAMPLE_RATE),
                     "-ac", str(CHANNELS),
@@ -111,9 +111,6 @@ def run_ffmpeg():
                 with mp3_lock:
                     mp3_chunks.append(data)
                     mp3_write_idx += 1
-                    if len(mp3_chunks) > BUFFER_SIZE:
-                        excess = len(mp3_chunks) - BUFFER_SIZE
-                        mp3_chunks = mp3_chunks[excess:]
                 mp3_event.set()
 
             ffmpeg.wait()
