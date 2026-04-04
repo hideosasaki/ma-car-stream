@@ -24,6 +24,11 @@ ICY_METAINT = 16000
 SNAPSERVER_URL = "http://localhost:1780/jsonrpc"
 BUFFER_SIZE = 2000
 
+# Silent AAC ADTS frame (48kHz, stereo, LC) - ~21.3ms of silence
+SILENT_ADTS_FRAME = b'\xff\xf1L\x80\x01\xbf\xfc!\x10\x04`\x8c\x1c'
+SILENCE_FRAME_DURATION = 1024 / 48000  # ~0.02133s per AAC frame
+SILENCE_TIMEOUT = 2.0  # seconds without ffmpeg data before generating silence
+
 # Global state
 current_icy_text = ""
 current_art_url = ""
@@ -34,6 +39,10 @@ mp3_chunks = collections.deque(maxlen=BUFFER_SIZE)
 mp3_write_idx = 0
 mp3_lock = threading.Lock()
 mp3_event = threading.Event()
+
+# Silence generator coordination
+last_ffmpeg_data_time = 0.0
+last_ffmpeg_lock = threading.Lock()
 
 
 def fetch_metadata():
@@ -83,7 +92,7 @@ def fetch_metadata():
 
 def run_ffmpeg():
     """Run ffmpeg continuously, buffer MP3 output."""
-    global mp3_write_idx
+    global mp3_write_idx, last_ffmpeg_data_time
 
     while True:
         try:
@@ -111,6 +120,8 @@ def run_ffmpeg():
                 with mp3_lock:
                     mp3_chunks.append(data)
                     mp3_write_idx += 1
+                with last_ffmpeg_lock:
+                    last_ffmpeg_data_time = time.monotonic()
                 mp3_event.set()
 
             ffmpeg.wait()
@@ -119,6 +130,44 @@ def run_ffmpeg():
             print(f"ffmpeg error: {e}", flush=True)
 
         time.sleep(1)
+
+
+def generate_silence():
+    """Inject silent ADTS frames when ffmpeg is not producing data."""
+    global mp3_write_idx, current_icy_text, current_art_url
+
+    while True:
+        time.sleep(SILENCE_TIMEOUT)
+
+        with last_ffmpeg_lock:
+            elapsed = time.monotonic() - last_ffmpeg_data_time
+
+        if elapsed < SILENCE_TIMEOUT:
+            continue
+
+        # No data from ffmpeg -- start injecting silence
+        with metadata_lock:
+            current_icy_text = "Waiting for playback..."
+            current_art_url = ""
+        print("No audio data, generating silence...", flush=True)
+
+        while True:
+            with last_ffmpeg_lock:
+                elapsed = time.monotonic() - last_ffmpeg_data_time
+            if elapsed < 0.5:
+                break
+
+            with mp3_lock:
+                mp3_chunks.append(SILENT_ADTS_FRAME)
+                mp3_write_idx += 1
+            mp3_event.set()
+            time.sleep(SILENCE_FRAME_DURATION)
+
+        # ffmpeg resumed -- clear waiting metadata
+        with metadata_lock:
+            current_icy_text = ""
+            current_art_url = ""
+        print("Audio data resumed, stopping silence.", flush=True)
 
 
 def build_icy_metadata():
@@ -220,6 +269,7 @@ class ICYHandler(http.server.BaseHTTPRequestHandler):
 def main():
     threading.Thread(target=fetch_metadata, daemon=True).start()
     threading.Thread(target=run_ffmpeg, daemon=True).start()
+    threading.Thread(target=generate_silence, daemon=True).start()
 
     server = http.server.ThreadingHTTPServer(("0.0.0.0", HTTP_PORT), ICYHandler)
     print(f"ICY server running on port {HTTP_PORT}", flush=True)
